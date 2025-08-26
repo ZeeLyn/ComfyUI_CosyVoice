@@ -1,0 +1,22 @@
+
+modelscope
+librosa
+HyperPyYAML
+onnx
+onnxruntime-gpu==1.22.0; sys_platform == 'linux'
+onnxruntime==1.22.1; sys_platform == 'darwin' or sys_platform == 'win32'
+openai-whisper
+inflect
+wetext
+omegaconf
+conformer
+diffusers
+hydra-core
+lightning
+rich
+gdown
+wget
+matplotlib
+pyarrow
+pydantic
+pyworld
