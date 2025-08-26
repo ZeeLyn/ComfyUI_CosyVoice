@@ -23,13 +23,6 @@ from cosyvoice.utils.common import set_all_random_seed
 from comfy_extras.nodes_audio import LoadAudio
 
 
-model_dir = os.path.join(now_dir, "pretrained_models")
-if not os.path.exists(os.path.join(model_dir,"CosyVoice2-0.5B")):
-    print("download.......CosyVoice")
-    from modelscope import snapshot_download
-    snapshot_download('iic/CosyVoice2-0.5B', local_dir= os.path.join(model_dir, 'CosyVoice2-0.5B'))
-    snapshot_download('iic/CosyVoice-ttsfrd', local_dir=os.path.join(model_dir,'CosyVoice-ttsfrd'))
-    os.system(f'cd {model_dir}/CosyVoice-ttsfrd/ && pip install ttsfrd_dependency-0.1-py3-none-any.whl && pip install ttsfrd-0.4.2-cp310-cp310-linux_x86_64.whl && apt install -y unzip && unzip resource.zip -d .')
 
 prompt_sample_rate=16000
 target_sample_rate=24000
@@ -263,6 +256,7 @@ class CosyVoice2Loader():
     def INPUT_TYPES(s):
         return {
             "required": {
+                "auto_download": ("BOOLEAN", {"default": True},),
                 "load_jit": ("BOOLEAN", {"default": False},),
                 "load_vllm": ("BOOLEAN", {"default": False},),
                 "load_trt": ("BOOLEAN", {"default": False},),
@@ -272,8 +266,19 @@ class CosyVoice2Loader():
 
 
 
-    def run(self,load_jit=True, load_vllm=False,load_trt=False,fp16=False):
-        cosyVoice2=CosyVoice2(os.path.join(folder_paths.models_dir,"CosyVoice","CosyVoice2-0.5B"), load_jit=load_jit, load_trt=load_trt, load_vllm=load_vllm,fp16=fp16)
+    def run(self,auto_download=True,load_jit=True, load_vllm=False,load_trt=False,fp16=False):
+        model_dir_root=os.path.join(folder_paths.models_dir,"CosyVoice")
+        model_dir = os.path.join(model_dir_root,"CosyVoice2-0.5B")
+        if auto_download:
+            if not os.path.exists(model_dir):
+                print("download.......CosyVoice")
+                from modelscope import snapshot_download
+                snapshot_download('iic/CosyVoice2-0.5B', local_dir= model_dir)
+                snapshot_download('iic/CosyVoice-ttsfrd', local_dir=os.path.join(model_dir_root,'CosyVoice-ttsfrd'))
+                os.system(f'cd {model_dir_root}/CosyVoice-ttsfrd/ && pip install ttsfrd_dependency-0.1-py3-none-any.whl && pip install ttsfrd-0.4.2-cp310-cp310-linux_x86_64.whl && apt install -y unzip && unzip resource.zip -d .')
+        if not os.path.exists(model_dir):
+            raise Exception("The model is not found, please check the model path.")
+        cosyVoice2=CosyVoice2(model_dir, load_jit=load_jit, load_trt=load_trt, load_vllm=load_vllm,fp16=fp16)
         return (cosyVoice2,)
     
 
