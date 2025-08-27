@@ -127,7 +127,7 @@ class CosyVoice2ZeroShot:
         return torch.from_numpy(output).unsqueeze(0)
 
     def run_model(self, model:CosyVoice2,tts_text=None,save_as_speaker=False,save_speaker_name=None,replace_exist_speaker=False,speed=1.0,seed=0,prompt_audio=None, prompt_text=None,select_speaker=""):
-        print('开始推理',prompt_text,prompt_audio,tts_text)
+        # print('开始推理',prompt_text,prompt_audio,tts_text)
         if tts_text is None or len(tts_text) == 0:
             raise Exception("The tts_text is required!")
         
@@ -235,7 +235,7 @@ class CosyVoice2CreateSpeaker():
         model_input=build_model_input(model,prompt_audio,prompt_text)
         model.frontend.spk2info[save_speaker_name]=model_input
         model.save_spkinfo()
-        return (model.list_available_spks(),)
+        return (json.dumps( model.list_available_spks()),)
 
 class CosyVoice2Loader():
     RETURN_TYPES = ("MODEL_CosyVoice2",)
@@ -297,7 +297,6 @@ class CosyVoice2SpeakerList():
         }
 
     def run(self,model:CosyVoice2):
-        print("model.list_available_spks()",model.list_available_spks())
         return (json.dumps( model.list_available_spks()),)
     
   
