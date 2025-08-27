@@ -11,7 +11,6 @@ from typing import Generator
 import folder_paths
 import hashlib
 now_dir = os.path.dirname(os.path.abspath(__file__))
-print("当前位置：",now_dir)
 sys.path.append(now_dir)
 # sys.path.append(os.path.join(now_dir, 'cosyvoice/cosyvoice'))
 sys.path.append(os.path.join(now_dir, 'third_party/Matcha-TTS'))
@@ -248,10 +247,6 @@ class CosyVoice2Loader():
 
     CATEGORY = "CosyVoice/V2"
     
-
-    def __init__(self):
-        pass
-
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -281,17 +276,39 @@ class CosyVoice2Loader():
         cosyVoice2=CosyVoice2(model_dir, load_jit=load_jit, load_trt=load_trt, load_vllm=load_vllm,fp16=fp16)
         return (cosyVoice2,)
     
+class CosyVoice2SpeakerList():
+    RETURN_TYPES = ("Speakers",)
+    RETURN_NAMES = ("speakers",)
 
+    FUNCTION = "run"
+
+    #OUTPUT_NODE = False
+    #OUTPUT_TOOLTIPS = ("",) # Tooltips for the output node
+
+    CATEGORY = "CosyVoice/V2"
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model": ("MODEL_CosyVoice2", { "tooltip": "This is a model white CosyVoice2"}),
+            },
+        }
+
+    def run(self,model:CosyVoice2):
+        return (model.list_available_spks(),)
   
 NODE_CLASS_MAPPINGS = {
     "CosyVoice2ZeroShot": CosyVoice2ZeroShot,
     "CosyVoice2Loader":CosyVoice2Loader,
-    "CosyVoice2CreateSpeaker":CosyVoice2CreateSpeaker
+    "CosyVoice2CreateSpeaker":CosyVoice2CreateSpeaker,
+    "CosyVoice2SpeakerList":CosyVoice2SpeakerList
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CosyVoice2ZeroShot": "CosyVoice2 Zero Shot",
     "CosyVoice2Loader": "CosyVoice2 Model Loader",
-    "CosyVoice2CreateSpeaker":"Create CosyVoice2 Speaker"
+    "CosyVoice2CreateSpeaker":"Create CosyVoice2 Speaker",
+    "CosyVoice2SpeakerList":"CosyVoice2 Speaker List"
 }
