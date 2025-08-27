@@ -236,6 +236,37 @@ class CosyVoice2CreateSpeaker():
         model.frontend.spk2info[save_speaker_name]=model_input
         model.save_spkinfo()
         return ()
+    
+    
+class CosyVoice2RemoveSpeaker():
+    RETURN_TYPES = ()
+    RETURN_NAMES = ()
+
+    FUNCTION = "run"
+
+    OUTPUT_NODE = True
+    #OUTPUT_TOOLTIPS = ("",) # Tooltips for the output node
+
+    CATEGORY = "CosyVoice/V2"
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model": ("MODEL_CosyVoice2", { "tooltip": "This is a model white CosyVoice2"}),
+                "speaker_name":("STRING",)
+            },
+        }
+
+
+    def run(self,model:CosyVoice2,speaker_name):
+        if speaker_name is None or len(speaker_name) == 0:
+            raise Exception("The speaker_name is required!")
+        if speaker_name not in model.frontend.spk2info:
+            raise Exception("Speaker with the name "+speaker_name+" does not exist, please check the name.")
+        del model.frontend.spk2info[speaker_name]
+        model.save_spkinfo()
+        return ()
 
 class CosyVoice2Loader():
     RETURN_TYPES = ("MODEL_CosyVoice2",)
@@ -305,12 +336,14 @@ NODE_CLASS_MAPPINGS = {
     "CosyVoice2Loader":CosyVoice2Loader,
     "CosyVoice2CreateSpeaker":CosyVoice2CreateSpeaker,
     "CosyVoice2SpeakerList":CosyVoice2SpeakerList,
+    "CosyVoice2RemoveSpeaker":CosyVoice2RemoveSpeaker
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "CosyVoice2ZeroShot": "CosyVoice2 Zero Shot",
-    "CosyVoice2Loader": "CosyVoice2 Model Loader",
-    "CosyVoice2CreateSpeaker":"Create CosyVoice2 Speaker",
-    "CosyVoice2SpeakerList":"CosyVoice2 Speaker List"
+    "CosyVoice2ZeroShot": "Zero Shot(V2)",
+    "CosyVoice2Loader": "Model Loader(V2)",
+    "CosyVoice2CreateSpeaker":"Create Speaker(V2)",
+    "CosyVoice2SpeakerList":"Speaker List(V2)",
+    "CosyVoice2RemoveSpeaker":"Remove Speaker(V2)"
 }
