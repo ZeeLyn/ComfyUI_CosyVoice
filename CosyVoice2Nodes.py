@@ -9,6 +9,7 @@ import numpy as np
 from tqdm import tqdm
 from typing import Generator
 import folder_paths
+import json
 import hashlib
 now_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(now_dir)
@@ -277,7 +278,7 @@ class CosyVoice2Loader():
         return (cosyVoice2,)
     
 class CosyVoice2SpeakerList():
-    RETURN_TYPES = ("Speakers",)
+    RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("speakers",)
 
     FUNCTION = "run"
@@ -296,13 +297,15 @@ class CosyVoice2SpeakerList():
         }
 
     def run(self,model:CosyVoice2):
-        return (model.list_available_spks(),)
+        print("model.list_available_spks()",model.list_available_spks())
+        return (json.dumps( model.list_available_spks()),)
+    
   
 NODE_CLASS_MAPPINGS = {
     "CosyVoice2ZeroShot": CosyVoice2ZeroShot,
     "CosyVoice2Loader":CosyVoice2Loader,
     "CosyVoice2CreateSpeaker":CosyVoice2CreateSpeaker,
-    "CosyVoice2SpeakerList":CosyVoice2SpeakerList
+    "CosyVoice2SpeakerList":CosyVoice2SpeakerList,
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
