@@ -102,7 +102,7 @@ class CosyVoice2ZeroShot:
                 "replace_exist_speaker":("BOOLEAN",{"default":False}),
                 "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2, "step": 0.1}),
                 "seed":("INT",{
-                    "default": 0
+                    "default": 0,"min":0,"max": 0xffffffffffffffff,"control_after_generate": True
                 }),
                
             },
