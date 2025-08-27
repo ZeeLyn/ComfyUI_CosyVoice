@@ -235,7 +235,7 @@ class CosyVoice2CreateSpeaker():
         model_input=build_model_input(model,prompt_audio,prompt_text)
         model.frontend.spk2info[save_speaker_name]=model_input
         model.save_spkinfo()
-        return None
+        return ()
 
 class CosyVoice2Loader():
     RETURN_TYPES = ("MODEL_CosyVoice2",)
