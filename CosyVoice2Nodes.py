@@ -22,7 +22,7 @@ from cosyvoice.utils.file_utils import logging
 from cosyvoice.utils.common import set_all_random_seed
 from comfy_extras.nodes_audio import LoadAudio
 
-
+MAX_SEED = 2**32 - 1
 
 prompt_sample_rate=16000
 target_sample_rate=24000
@@ -87,7 +87,7 @@ class CosyVoice2ZeroShot:
     OUTPUT_NODE = False
     #OUTPUT_TOOLTIPS = ("",) # Tooltips for the output node
 
-    CATEGORY = "CosyVoice/V2"
+    CATEGORY = "CosyVoice"
 
     
     @classmethod
@@ -102,7 +102,7 @@ class CosyVoice2ZeroShot:
                 "replace_exist_speaker":("BOOLEAN",{"default":False}),
                 "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2, "step": 0.1}),
                 "seed":("INT",{
-                    "default": 0,"min":0,"max": 0xffffffffffffffff,"control_after_generate": True
+                    "default": 0,"min":0,"max": 1125899906842624,"control_after_generate": True
                 }),
                
             },
@@ -113,18 +113,12 @@ class CosyVoice2ZeroShot:
             }
         }
     def get_output_data(self,generator):
-        # output_list = []
-        # for out_dict in generator:
-        #     output_numpy = out_dict['tts_speech'].squeeze(0).numpy() * 32768 
-        #     output_numpy = output_numpy.astype(np.int16)
-        #     output_list.append(torch.Tensor(output_numpy/32768).unsqueeze(0))
-        # return torch.cat(output_list,dim=1).unsqueeze(0)
-        
-        chunks = []
-        for chunk in generator:
-            chunks.append(chunk['tts_speech'].numpy().flatten())
-        output = np.array(chunks)
-        return torch.from_numpy(output).unsqueeze(0)
+        speechs=[]
+        for part in generator:
+            speechs.append(part['tts_speech'])
+        tts_speech = torch.cat(speechs, dim=1)
+        tts_speech = tts_speech.unsqueeze(0)
+        return tts_speech
 
     def run_model(self, model:CosyVoice2,tts_text=None,save_as_speaker=False,save_speaker_name=None,replace_exist_speaker=False,speed=1.0,seed=0,prompt_audio=None, prompt_text=None,select_speaker=""):
         # print('开始推理',prompt_text,prompt_audio,tts_text)
@@ -136,16 +130,13 @@ class CosyVoice2ZeroShot:
        
         if prompt_audio is None and len(select_speaker)==0:
             raise Exception("Parameters prompt_audio, select_speaker, need to select one!")
+        
+        if seed > MAX_SEED:
+            seed = seed % (MAX_SEED + 1)
 
         set_all_random_seed(seed)
 
         if prompt_audio is not None:
-            # waveform = prompt_audio['waveform']
-            # sample_rate = prompt_audio['sample_rate']
-            # speech  = audio_resample(waveform, sample_rate)
-            # prompt_speech_16k = postprocess(speech)
-            # print('model.frontend.spk2info',model.frontend.spk2info)
-            # speech_token, speech_token_len = model.frontend._extract_speech_token(prompt_speech_16k)
             if save_as_speaker:
                 if save_speaker_name is None or len(save_speaker_name) == 0:
                     raise Exception("The save_speaker_name is required!")
@@ -153,30 +144,16 @@ class CosyVoice2ZeroShot:
                     raise Exception("Speaker with the name "+save_speaker_name+" does exist, please check the name.")
                     
 
-            # prompt_text = model.frontend.text_normalize(prompt_text, split=False,text_frontend=True)
-            
-            # prompt_text_token, prompt_text_token_len = model.frontend._extract_text_token(prompt_text)
-
-            # prompt_speech_resample = torchaudio.transforms.Resample(orig_freq=16000, new_freq=model.sample_rate)(prompt_speech_16k)
-            # speech_feat, speech_feat_len = model.frontend._extract_speech_feat(prompt_speech_resample)
-            # if model.sample_rate == 24000:
-            #     token_len = min(int(speech_feat.shape[1] / 2), speech_token.shape[1])
-            #     speech_feat, speech_feat_len[:] = speech_feat[:, :2 * token_len], 2 * token_len
-            #     speech_token, speech_token_len[:] = speech_token[:, :token_len], token_len
-
-            # embedding = model.frontend._extract_spk_embedding(prompt_speech_16k)
-            # model_input = {'prompt_text': prompt_text_token, 'prompt_text_len': prompt_text_token_len,
-            #             'llm_prompt_speech_token': speech_token, 'llm_prompt_speech_token_len': speech_token_len,
-            #             'flow_prompt_speech_token': speech_token, 'flow_prompt_speech_token_len': speech_token_len,
-            #             'prompt_speech_feat': speech_feat, 'prompt_speech_feat_len': speech_feat_len,
-            #             'llm_embedding': embedding, 'flow_embedding': embedding}
             model_input=build_model_input(model,prompt_audio,prompt_text)
             
-            if prompt_audio is not None and save_as_speaker:
+            if save_as_speaker:
                 model.frontend.spk2info[save_speaker_name]=model_input
                 model.save_spkinfo()
         else:
+            if select_speaker not in model.frontend.spk2info:
+                raise Exception("Speaker with the name "+select_speaker+" does not exist, please check the name.")
             model_input=model.frontend.spk2info[select_speaker]
+                
         
         for i in tqdm(model.frontend.text_normalize(tts_text, split=True, text_frontend=True)):
             if (not isinstance(i, Generator)) and len(i) < 0.5 * len(prompt_text):
@@ -206,7 +183,7 @@ class CosyVoice2CreateSpeaker():
     OUTPUT_NODE = True
     #OUTPUT_TOOLTIPS = ("",) # Tooltips for the output node
 
-    CATEGORY = "CosyVoice/V2"
+    CATEGORY = "CosyVoice"
     
 
 
@@ -247,7 +224,7 @@ class CosyVoice2RemoveSpeaker():
     OUTPUT_NODE = True
     #OUTPUT_TOOLTIPS = ("",) # Tooltips for the output node
 
-    CATEGORY = "CosyVoice/V2"
+    CATEGORY = "CosyVoice"
 
     @classmethod
     def INPUT_TYPES(s):
@@ -277,7 +254,7 @@ class CosyVoice2Loader():
     #OUTPUT_NODE = False
     #OUTPUT_TOOLTIPS = ("",) # Tooltips for the output node
 
-    CATEGORY = "CosyVoice/V2"
+    CATEGORY = "CosyVoice"
     
     @classmethod
     def INPUT_TYPES(s):
@@ -317,7 +294,7 @@ class CosyVoice2SpeakerList():
     #OUTPUT_NODE = False
     #OUTPUT_TOOLTIPS = ("",) # Tooltips for the output node
 
-    CATEGORY = "CosyVoice/V2"
+    CATEGORY = "CosyVoice"
 
     @classmethod
     def INPUT_TYPES(s):
